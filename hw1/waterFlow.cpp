@@ -8,6 +8,7 @@
 #include <queue>
 #include <set>
 #include <algorithm>
+#include <climits>
 
 class Edge;
 struct Node;
@@ -76,6 +77,7 @@ int main(int argc, char *argv[]){
     
     int num_sims;
     input_file >> num_sims;
+    input_file.ignore(INT_MAX, '\n');
     
     std::ofstream output("output.txt");
     
@@ -85,13 +87,13 @@ int main(int argc, char *argv[]){
         // <task> algorithm that you are supposed to use for this case
         std::string alg;
         input_file >> alg;
+        input_file.ignore(INT_MAX, '\n');
         
         Graph *g = new Graph();
         // <source> name of the source node
         std::string source_name;
         input_file >> source_name;
-        input_file.ignore();
-        input_file.ignore();
+        input_file.ignore(INT_MAX, '\n');
         g->create_node(source_name, SOURCE);
         // <destinations> names of the destination nodes
         std::string line;
@@ -116,6 +118,7 @@ int main(int argc, char *argv[]){
         // <#pipes> represents the number of pipes
         int num_pipes;
         input_file >> num_pipes;
+        input_file.ignore(INT_MAX, '\n');
         
         // <graph> represents start-end nodes, lengths and off-times of pipes
         for (int i = 0; i < num_pipes; ++i)
@@ -136,6 +139,7 @@ int main(int argc, char *argv[]){
         
         int start_time;
         input_file >> start_time;
+        input_file.ignore(INT_MAX, '\n');
         
         //run simulation
         if(alg == "BFS"){
@@ -202,10 +206,10 @@ Graph::Graph(){
 
 Graph::~Graph(){
     //clean up nodes and edges created in graph
-    for(auto it = nodes.begin(); it != nodes.end(); ++it) {
+    for(std::vector<Node*>::iterator it = nodes.begin(); it != nodes.end(); ++it) {
         delete *it;
     }
-    for(auto it = edges.begin(); it != edges.end(); ++it) {
+    for(std::vector<Edge*>::iterator it = edges.begin(); it != edges.end(); ++it) {
         delete *it;
     }
 
@@ -221,8 +225,8 @@ void Graph::create_node(std::string name, Node_type type){
 }
 
 void Graph::add_edge(std::string start_name, std::string end_name, int length){
-    Node *start = nullptr;
-    Node *end = nullptr;
+    Node *start = NULL;
+    Node *end = NULL;
     for (int i = 0; i < nodes.size(); ++i)
     {
         if(nodes[i]->name == start_name){
@@ -236,7 +240,7 @@ void Graph::add_edge(std::string start_name, std::string end_name, int length){
         std::cout << "Problem in adding edge" << std::endl;
         return;
     }
-    Edge *e = new Edge(start, end, length, nullptr);
+    Edge *e = new Edge(start, end, length, NULL);
     edges.push_back(e);
     start->add_edge(e);
 }
