@@ -15,7 +15,6 @@
 class Edge;
 struct Node;
 class Graph;
-class UCS_Node;
 enum Node_type {SOURCE, DEST, MID};
 
 void run_BFS(Graph &g, int start_time, std::ofstream &output);
@@ -64,22 +63,7 @@ public:
     void add_edge(Edge* e);
     std::vector<Node*> &getChildren();
     std::vector<Node*> getUCSChildren(int currentCost);
-    //std::vector<UCS_Node> getUCSChildren(int currentCost);//yeah it's slow but better than storing it here
     int getNumChildren();
-};
-
-class UCS_Node{
-    
-public:
-
-    Node_type type;
-    int cost;
-    std::string name;
-    Node *origin;
-    std::vector<int> validHours;
-    
-    UCS_Node(Node *node);
-    bool isActive(int time);
 };
 
 bool compareNodeName(const Node* lhs, const Node* rhs){
@@ -94,6 +78,7 @@ int main(int argc, char *argv[]){
     }
     
     std::ifstream input_file(argv[2]);
+    //std::ifstream input_file("myTests.txt");
     if(!input_file.is_open()){
         std::cout << "File not found" << std::endl;
         return 1;
@@ -236,7 +221,7 @@ void run_BFS(Graph &g, int start_time, std::ofstream& output){
         //increment time
         current_time++;
         current_time = current_time%24;
-
+        
     }
     //if this while loop finishes then all nodes were checked and no suceess was found
     std::cout << "None" << std::endl;
@@ -263,7 +248,7 @@ void run_DFS(Graph &g, int start_time, std::ofstream& output){
     while(!frontier.empty()){
         n = frontier.top();
         frontier.pop();
-
+        
         if(n->type == DEST){
             //success
             std::cout << n->name << " " << current_time << std::endl;
@@ -299,7 +284,7 @@ void run_UCS(Graph &g, int start_time, std::ofstream& output){
     int init_hours[24] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 };
     n->setValidHours(std::vector<int>(init_hours, init_hours + sizeof(init_hours) / sizeof(int)));
     std::list<Node*> frontier;
-
+    
     frontier.push_front(n);
     
     std::set<Node*> explored;
@@ -320,7 +305,7 @@ void run_UCS(Graph &g, int start_time, std::ofstream& output){
             frontier.pop_front();
         }
         
-    
+        
         if(n->type == DEST){
             //success
             //total time is the starting time + the total path cost
@@ -341,11 +326,9 @@ void run_UCS(Graph &g, int start_time, std::ofstream& output){
             if(explored.find(children[i]) == explored.end()){//if not in explored
                 std::list<Node*>::iterator search = std::find(frontier.begin(), frontier.end(), children[i]);
                 if(search != frontier.end()){//not in explored but in frontier
-                      frontier.remove(*search);//remove and then add new child value
+                    frontier.remove(*search);//remove and then add new child value
                 }
                 
-                
-
                 //not in explored or frontier
                 bool found_place = false;
                 std::list<Node*>::iterator iterator;
@@ -365,9 +348,9 @@ void run_UCS(Graph &g, int start_time, std::ofstream& output){
                 if(!found_place){
                     frontier.push_back(children[i]);
                 }
-    
+                
             }
-        
+            
         }
         //increment time will not be +1 but instead be start + total pathCost
         current_time = start_time + n->pathCost;
@@ -378,103 +361,8 @@ void run_UCS(Graph &g, int start_time, std::ofstream& output){
     std::cout << "None" << std::endl;
     output << "None" << std::endl;
     return;
-    
-    
 }
-//void run_UCS(Graph &g, int start_time, std::ofstream& output){
-//    int current_time = start_time;
-//    Node *temp = g.getSource();
-//    temp->pathCost = 0;
-//    int init_hours[24] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 };
-//    temp->setValidHours(std::vector<int>(init_hours, init_hours + sizeof(init_hours) / sizeof(int)));
-//    
-//    UCS_Node n = UCS_Node(temp);
-//    std::list<UCS_Node> frontier;
-//    
-//    frontier.push_front(n);
-//    
-//    std::set<Node*> explored;
-//    
-//    while(!frontier.empty()){
-//        n = frontier.front();
-//        frontier.pop_front();
-//        
-//        //checks to see if n is a valid node, if not it will pull the next valid node
-//        while(!n.isActive(current_time)){
-//            if(frontier.empty()){
-//                //remaining children are not accessible
-//                std::cout << "None" << std::endl;
-//                output << "None" << std::endl;
-//                return;
-//            }
-//            n = frontier.front();
-//            frontier.pop_front();
-//        }
-//        
-//        
-//        if(n.type == DEST){
-//            //success
-//            //total time is the starting time + the total path cost
-//            std::cout << n.name << " " << (start_time + n.cost)%24 << std::endl;
-//            output << n.name << " " << (start_time + n.cost)%24 << std::endl;
-//            return;
-//        }
-//        explored.insert(n.origin);
-//        
-//        //queue children into frontier
-//        int current_cost = n.cost;
-//        std::vector<UCS_Node> children = n.origin->getUCSChildren(current_cost);
-//        for (int i=0; i<children.size(); ++i) {
-//            //if not in explored or frontier == !explored && !frontier
-//            //add to frontier
-//            //if in frontier with larger cost
-//            //remove node currently in frontier and insert this node
-//            UCS_Node expansion = UCS_Node(children[i]);
-//            if(explored.find(expansion.origin) == explored.end()){//if not in explored
-//                std::list<UCS_Node>::iterator it;
-//                for (it = frontier.begin(); it != frontier.end(); ++it) {
-//                    if(expansion.name == it->name){
-//                        if( it->cost > expansion.cost){
-//                            frontier.erase(it);//remove and then add new child value
-//                        }
-//                    }
-//                }
-//            
-//                //not in explored or frontier
-//                bool found_place = false;
-//                std::list<UCS_Node>::iterator iterator;
-//                for (iterator = frontier.begin(); iterator != frontier.end(); ++iterator) {
-//                    if( expansion.cost < (iterator)->cost){
-//                        //reached correct spot to insert in prioirty queue
-//                        frontier.insert(iterator, expansion);
-//                        found_place = true;
-//                    }
-//                    else if(expansion.cost == (iterator)->cost){
-//                        if(expansion.name >= (iterator)->name){
-//                            frontier.insert(iterator, expansion);
-//                            found_place = true;
-//                        }
-//                    }
-//                }
-//                if(!found_place){
-//                    frontier.push_back(expansion);
-//                }
-//                
-//            }
-//            
-//        }
-//        //increment time will not be +1 but instead be start + total pathCost
-//        current_time = start_time + n.cost;
-//        current_time = current_time%24;
-//        
-//    }
-//    //if this while loop finishes then all nodes were checked and no suceess was found
-//    std::cout << "None" << std::endl;
-//    output << "None" << std::endl;
-//    return;
-//    
-//    
-//}
+
 
 //Graph implementation
 
@@ -486,7 +374,7 @@ Graph::~Graph(){
     for(std::vector<Edge*>::iterator it = edges.begin(); it != edges.end(); ++it) {
         delete *it;
     }
-
+    
 }
 
 void Graph::create_node(std::string name, Node_type type){
@@ -527,7 +415,7 @@ Edge::Edge(Node* source, Node* dest, int length, int *hour_data):
 source(source), dest(dest), length(length)
 {
     for (int i = 0; i<24; i++) {
-    if(hour_data[i] == 0)
+        if(hour_data[i] == 0)
             active_hours.push_back(i);
     }
     
@@ -567,18 +455,6 @@ std::vector<Node*> Node::getUCSChildren(int current_cost){
     return result;
 }
 
-//std::vector<UCS_Node> Node::getUCSChildren(int current_cost){
-//    std::vector<UCS_Node> result;
-//    for (int i=0; i<edges.size(); ++i) {
-//        //set path cost & validHours before insertion
-//        UCS_Node next_node = UCS_Node(edges[i]->dest);
-//        next_node.validHours = edges[i]->active_hours;
-//        next_node.cost = current_cost + edges[i]->length;
-//        result.push_back(next_node);
-//    }
-//    return result;
-//}
-
 int Node::getNumChildren(){
     return static_cast<int>(edges.size());
 }
@@ -600,22 +476,5 @@ bool Node::isActive(int time){
     return false;
 }
 
-//UCS Node used to update copy
-UCS_Node::UCS_Node(Node *node){
-    name = node->name;
-    type = node->type;
-    cost = node->pathCost;
-    validHours = node->validHours;
-    origin = node;
-}
-
-bool UCS_Node::isActive(int time){
-    for (int i=0; i<validHours.size(); ++i) {
-        if(validHours[i] == time){
-            return true;
-        }
-    }
-    return false;
-}
 
 
