@@ -70,6 +70,13 @@ bool compareNodeName(const Node* lhs, const Node* rhs){
     return lhs->name < rhs->name;
 }
 
+class State{
+public:
+    Node *n;
+    int pathCost;
+    State(Node *n, int cost);
+};
+
 int main(int argc, char *argv[]){
     
     if(argc < 2){
@@ -173,7 +180,9 @@ int main(int argc, char *argv[]){
             run_DFS(*g, start_time, output);
         }
         else if(alg == "UCS"){
-            run_UCS(*g, start_time, output);
+            //run_UCS(*g, start_time, output);
+            std::cout << "UCS not working" << std::endl;
+            output << "UCS not working" << std::endl;
         }
         else{
             std::cout << "Haven't written these yet" << std::endl;
@@ -188,39 +197,39 @@ int main(int argc, char *argv[]){
 
 void run_BFS(Graph &g, int start_time, std::ofstream& output){
     int current_time = start_time;
+    
     Node *n = g.getSource();
     if(n->type == DEST){
         std::cout << n->name << " " << current_time << std::endl;
         output << n->name << " " << current_time << std::endl;
         return;
     }
-    std::queue<Node*> frontier;
-    frontier.push(n);
+    std::queue<State> frontier;
+    State s = State(n, 0);
+    frontier.push(s);
     
     std::set<Node*> explored;
     explored.insert(n);
     
     while(!frontier.empty()){
-        n = frontier.front();
+        s = frontier.front();
         frontier.pop();
         
-        if(n->type == DEST){
+        if(s.n->type == DEST){
             //success
-            std::cout << n->name << " " << current_time << std::endl;
-            output << n->name << " " << current_time << std::endl;
+            std::cout << s.n->name << " " << start_time + s.pathCost << std::endl;
+            output << s.n->name << " " << start_time + s.pathCost << std::endl;
             return;
         }
         //queue children into frontier
-        std::vector<Node*> children = n->getChildren();
+        std::vector<Node*> children = s.n->getChildren();
         for (int i=0; i<children.size(); ++i) {
             if(explored.find(children[i]) == explored.end()){//If the node has not already been explored
-                frontier.push(children[i]);
+                State new_node = State(children[i], s.pathCost + 1);
+                frontier.push(new_node);
                 explored.insert(children[i]);
             }
         }
-        //increment time
-        current_time++;
-        current_time = current_time%24;
         
     }
     //if this while loop finishes then all nodes were checked and no suceess was found
@@ -233,40 +242,40 @@ void run_BFS(Graph &g, int start_time, std::ofstream& output){
 
 void run_DFS(Graph &g, int start_time, std::ofstream& output){
     int current_time = start_time;
+    
     Node *n = g.getSource();
     if(n->type == DEST){
         std::cout << n->name << " " << current_time << std::endl;
         output << n->name << " " << current_time << std::endl;
         return;
     }
-    std::stack<Node*> frontier;
-    frontier.push(n);
+    State s = State(n, 0);
+    std::stack<State> frontier;
+    frontier.push(s);
     
     std::set<Node*> explored;
     explored.insert(n);
     
     while(!frontier.empty()){
-        n = frontier.top();
+        s = frontier.top();
         frontier.pop();
         
-        if(n->type == DEST){
+        if(s.n->type == DEST){
             //success
-            std::cout << n->name << " " << current_time << std::endl;
-            output << n->name << " " << current_time << std::endl;
+            std::cout << s.n->name << " " << start_time + s.pathCost << std::endl;
+            output << s.n->name << " " << start_time + s.pathCost << std::endl;
             return;
         }
         
         //queue children into frontier
-        std::vector<Node*> children = n->getChildren();
+        std::vector<Node*> children = s.n->getChildren();
         for (int i=0; i<children.size(); ++i) {
             if(explored.find(children[i]) == explored.end()){//If the node has not already been explored
-                frontier.push(children[i]);
+                State new_node = State(children[i], s.pathCost + 1);
+                frontier.push(new_node);
                 explored.insert(children[i]);
             }
         }
-        //increment time
-        current_time++;
-        current_time = current_time%24;
         
     }
     //if this while loop finishes then all nodes were checked and no suceess was found
@@ -476,5 +485,7 @@ bool Node::isActive(int time){
     return false;
 }
 
-
-
+State::State(Node *node, int cost){
+    n = node;
+    pathCost = cost;
+}
