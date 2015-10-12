@@ -25,8 +25,8 @@ void run_UCS(Graph &g, int start_time, std::ofstream &output);
 class Graph{
     Node *source;
     std::vector<Node*> nodes;
-public:
     std::vector<Edge*> edges;
+public:
     ~Graph();
     void create_node(std::string name, Node_type type);
     void add_edge(std::string start_name, std::string end_name, int length, int hours[]);
@@ -180,13 +180,9 @@ int main(int argc, char *argv[]){
             run_DFS(*g, start_time, output);
         }
         else if(alg == "UCS"){
-            if(g->edges.size() > 799){
-                std::cout << "UCS hangs for big" << std::endl;
-                output << "UCS hangs for big" << std::endl;
-            }
-            else{
-            run_UCS(*g, start_time, output);
-            }
+            //run_UCS(*g, start_time, output);
+            std::cout << "UCS not working" << std::endl;
+            output << "UCS not working" << std::endl;
         }
         else{
             std::cout << "Haven't written these yet" << std::endl;
@@ -200,11 +196,12 @@ int main(int argc, char *argv[]){
 
 
 void run_BFS(Graph &g, int start_time, std::ofstream& output){
+    int current_time = start_time;
     
     Node *n = g.getSource();
     if(n->type == DEST){
-        std::cout << n->name << " " << start_time << std::endl;
-        output << n->name << " " << start_time << std::endl;
+        std::cout << n->name << " " << current_time << std::endl;
+        output << n->name << " " << current_time << std::endl;
         return;
     }
     std::queue<State> frontier;
@@ -244,11 +241,12 @@ void run_BFS(Graph &g, int start_time, std::ofstream& output){
 }
 
 void run_DFS(Graph &g, int start_time, std::ofstream& output){
+    int current_time = start_time;
     
     Node *n = g.getSource();
     if(n->type == DEST){
-        std::cout << n->name << " " << start_time << std::endl;
-        output << n->name << " " << start_time << std::endl;
+        std::cout << n->name << " " << current_time << std::endl;
+        output << n->name << " " << current_time << std::endl;
         return;
     }
     State s = State(n, 0);
@@ -294,89 +292,79 @@ void run_UCS(Graph &g, int start_time, std::ofstream& output){
     n->pathCost = 0;
     int init_hours[24] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 };
     n->setValidHours(std::vector<int>(init_hours, init_hours + sizeof(init_hours) / sizeof(int)));
-    std::list<State> frontier;
+    std::list<Node*> frontier;
     
-    State s = State(n, 0);
-    frontier.push_front(s);
+    frontier.push_front(n);
     
     std::set<Node*> explored;
     
     while(!frontier.empty()){
-        s = frontier.front();
+        n = frontier.front();
         frontier.pop_front();
         
         //checks to see if n is a valid node, if not it will pull the next valid node
-        while(!s.n->isActive(current_time)){
+        while(!n->isActive(current_time)){
             if(frontier.empty()){
                 //remaining children are not accessible
                 std::cout << "None" << std::endl;
                 output << "None" << std::endl;
                 return;
             }
-            s = frontier.front();
+            n = frontier.front();
             frontier.pop_front();
         }
         
         
-        if(s.n->type == DEST){
+        if(n->type == DEST){
             //success
             //total time is the starting time + the total path cost
-            std::cout << s.n->name << " " << (start_time + s.pathCost)%24 << std::endl;
-            output << s.n->name << " " << (start_time + s.pathCost)%24 << std::endl;
+            std::cout << n->name << " " << (start_time + n->pathCost)%24 << std::endl;
+            output << n->name << " " << (start_time + n->pathCost)%24 << std::endl;
             return;
         }
         explored.insert(n);
         
         //queue children into frontier
-        int current_cost = s.pathCost;
-        std::vector<Node*> children = s.n->getUCSChildren(current_cost);
+        int current_cost = n->pathCost;
+        std::vector<Node*> children = n->getUCSChildren(current_cost);
         for (int i=0; i<children.size(); ++i) {
             //if not in explored or frontier == !explored && !frontier
                 //add to frontier
             //if in frontier with larger cost
                 //remove node currently in frontier and insert this node
             if(explored.find(children[i]) == explored.end()){//if not in explored
+                std::list<Node*>::iterator search = std::find(frontier.begin(), frontier.end(), children[i]);
+                if(search != frontier.end()){//not in explored but in frontier
+                    frontier.remove(*search);//remove and then add new child value
+                }
+                
+                //not in explored or frontier
                 bool found_place = false;
-                //Iterate through frontier to see if the node is already in there, check if new value is less cost, remove, if it's greater don't add it
-                std::list<State>::iterator iterator;
+                std::list<Node*>::iterator iterator;
                 for (iterator = frontier.begin(); iterator != frontier.end(); ++iterator) {
-                    if((*iterator).n == children[i]){
-                        if(iterator->pathCost > children[i]->pathCost){
-                            frontier.erase(iterator);
-                        }
-                        else{
+                    if( children[i]->pathCost < (*iterator)->pathCost){
+                        //reached correct spot to insert in prioirty queue
+                        frontier.insert(iterator, children[i]);
+                        found_place = true;
+                    }
+                    else if(children[i]->pathCost == (*iterator)->pathCost){
+                        if(children[i]->name >= (*iterator)->name){
+                            frontier.insert(iterator, children[i]);
                             found_place = true;
                         }
                     }
-                    
                 }
-                //Place the state in the correct place in the priority queue
                 if(!found_place){
-                    for (iterator = frontier.begin(); iterator != frontier.end(); ++iterator) {
-                        if( children[i]->pathCost < iterator->pathCost){
-                            //reached correct spot to insert in prioirty queue
-                            State new_node = State(children[i], children[i]->pathCost);
-                            frontier.insert(iterator, new_node);
-                            found_place = true;
-                        }
-                        else if(children[i]->pathCost == iterator->pathCost){
-                            if(children[i]->name >= iterator->n->name){
-                                State new_node = State(children[i], children[i]->pathCost);
-                                frontier.insert(iterator, new_node);
-                                found_place = true;
-                            }
-                        }
-                    }
-                    if(!found_place){
-                        State new_node = State(children[i], children[i]->pathCost);
-                        frontier.push_back(new_node);
-                    }
+                    frontier.push_back(children[i]);
                 }
+                
             }
+            
         }
-        //increment time
-        current_time = start_time + s.pathCost;
+        //increment time will not be +1 but instead be start + total pathCost
+        current_time = start_time + n->pathCost;
         current_time = current_time%24;
+        
     }
     //if this while loop finishes then all nodes were checked and no suceess was found
     std::cout << "None" << std::endl;

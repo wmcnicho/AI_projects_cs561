@@ -1,50 +1,50 @@
 OLSC 4
-UCS not working
-UCS not working
+HHXX 19
+OUOC 16
 ACWY 10
 HRVC 2
 ASHX 16
 DNDR 7
-UCS not working
-UCS not working
+BAKE 18
+FBVK 10
 QZTV 14
 DNXX 4
 WMEL 21
 WDJA 23
 OEFV 12
-UCS not working
-UCS not working
+FUZZ 1
+None
 WPQT 6
-UCS not working
-UCS not working
+AGWN 7
+UTTU 8
 TOQW 6
 GDHZ 24
 FFYN 4
-UCS not working
+UCS hangs for big
 WBIK 16
-UCS not working
-UCS not working
+None
+UCS hangs for big
 NWDL 21
 None
-UCS not working
+JNDU 1
 VQPJ 27
 BGTD 7
 UXSB 9
 GMUQ 7
 CGIX 8
-UCS not working
+IYEP 0
 XHLK 25
-UCS not working
+UZXO 2
 None
 ZMXA 7
-UCS not working
+PWDW 1
 KZVD 18
 IXPN 22
-UCS not working
+DUUM 18
 YVYG 14
-UCS not working
-UCS not working
+None
+PJES 23
 DDJW 21
-UCS not working
-UCS not working
+None
+HSPE 17
 SHXF 11
