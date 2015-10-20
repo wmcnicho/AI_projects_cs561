@@ -13,6 +13,7 @@ void run_greedy(int p, std::vector<int>&p2_state, std::vector<int>&p1_state, int
 void run_minimax(int p, std::vector<int>&p2_state, std::vector<int>&p1_state, int p2S, int p1S, int depth, std::ofstream &next_state, std::ofstream &log);
 void run_ab(int p, std::vector<int>&p2_state, std::vector<int>&p1_state, int p2S, int p1S, int depth, std::ofstream &output, std::ofstream &log);
 TreeItem *minimax_value(MancalaBoard& board, int current_depth, int max_depth, int player_num, bool is_max, TreeItem *node, int root_player, bool print, std::ofstream &log);
+TreeItem *minimax_value_ab(MancalaBoard& board, int current_depth, int max_depth, int player_num, bool is_max, TreeItem* cur_node, int root_player, std::ofstream &log, int alpha, int beta);
 
 
 int main(int argc, char *argv[]){
@@ -117,7 +118,8 @@ struct TreeItem{
     TreeItem(bool type, int value, int player_num, int cell_num, int depth);
     TreeItem(std::string name);//used for root node
     
-    void print_to_log(std::ofstream &log, bool print);
+    void print_to_log(std::ofstream &log, bool print);//for minimax false if greedy
+    void print_to_log(std::ofstream &log, int alpha, int beta);//used in alpha-beta
 };
 
 class GameTree{
@@ -214,9 +216,9 @@ void run_minimax(int p, std::vector<int>&p2_state, std::vector<int>&p1_state, in
             next_node = new TreeItem(is_max, INT32_MAX, p, next_moves[i], cur_depth);
         }
         next_node->bonus = bonus;
-        //next_node->print_to_log(log, print);
+        
         TreeItem *best_child = minimax_value(traverseBoard, cur_depth, depth, next_player, is_max, next_node, p, print, log);
-        if(bonus){//if it's a part of a string of moves, needs fixing
+        if(bonus){
             next_node->next_move = best_child;
         }
         next_node->value = best_child->value;
@@ -246,7 +248,6 @@ void run_minimax(int p, std::vector<int>&p2_state, std::vector<int>&p1_state, in
 
 TreeItem *minimax_value(MancalaBoard& board, int current_depth, int max_depth, int player_num, bool is_max, TreeItem* cur_node, int root_player, bool print, std::ofstream &log){
     //if terminal test/ depth test
-    //std::cout << cur_node->move_name << "," << current_depth << "," << cur_node->value << std::endl;
     if (!cur_node->bonus && (board.moves_available(player_num) == 0 || current_depth >= max_depth) ){
         cur_node->value = board.util_value(player_num, root_player);
         cur_node->print_to_log(log, print);
@@ -355,10 +356,253 @@ TreeItem *minimax_value(MancalaBoard& board, int current_depth, int max_depth, i
     }
 }
 void run_ab(int p, std::vector<int>&p2_state, std::vector<int>&p1_state, int p2S, int p1S, int depth, std::ofstream &next_state, std::ofstream &log){
-    std::cout << "Write this" << std::endl;
+    
+    std::cout << "Node,Depth,Value,Alpha,Beta" << std::endl;
+    log << "Node,Depth,Value,Alpha,Beta" << std::endl;
+
+    //TODO clean up all the TreeItem memory
+    GameTree tree = GameTree();
+    TreeItem *root = new TreeItem("root");
+    tree.addChild(NULL, root);
+    
+    TreeItem *best_move = root;
+    MancalaBoard initialBoard = MancalaBoard(p2_state, p1_state, p2S, p1S);
+    
+    int *next_moves = initialBoard.next_moves(p);
+    int count = initialBoard.moves_available(p);
+    int alpha = INT32_MIN;
+    int beta = INT32_MAX;
+    root->print_to_log(log, alpha, beta);
+    for (int i=0; i < count; i++) {
+        MancalaBoard traverseBoard = initialBoard;
+        bool bonus = traverseBoard.make_move(p, next_moves[i]);
+        int cur_depth = 1;
+        bool is_max = bonus;
+        int next_player = p;
+        if(!bonus){
+            if(p == 1){
+                next_player = 2;
+            }
+            else{
+                next_player = 1;
+            }
+        }
+        TreeItem *next_node;
+        if(is_max){
+            next_node = new TreeItem(is_max, INT32_MIN, p, next_moves[i], cur_depth);
+        }
+        else{
+            next_node = new TreeItem(is_max, INT32_MAX, p, next_moves[i], cur_depth);
+        }
+        next_node->bonus = bonus;
+        TreeItem *best_child = minimax_value_ab(traverseBoard, cur_depth, depth, next_player, is_max, next_node, p, log, alpha, beta);
+        if(bonus){//if it's a part of a string of moves, needs fixing
+            next_node->next_move = best_child;
+        }
+        next_node->value = best_child->value;
+        if(next_node->value > best_move->value){
+            best_move = next_node;
+            root->value = best_move->value;
+        }
+        if(best_move->value >= beta){
+            break;//found! this should never hit
+        }
+        if(best_move->value > alpha){
+            alpha = best_move->value;
+        }
+        
+        root->print_to_log(log, alpha, beta);
+    }
+    delete [] next_moves;
+    //at this point best_move should correspond to the TreeItem of the best move
+    
+    //Make the series of moves to update the board to the new state
+    initialBoard.make_move(best_move->player_num, best_move->move_index);
+    TreeItem *move = best_move->next_move;
+    while(move != NULL){
+        initialBoard.make_move(move->player_num, move->move_index);
+        move = move->next_move;
+    }
+    
+    initialBoard.print_to_file(next_state);
+    
+    
+    //delete best_move;
+    //Clear up memory made by the tree!
+    
+    
 }
 
+TreeItem *minimax_value_ab(MancalaBoard& board, int current_depth, int max_depth, int player_num, bool is_max, TreeItem* cur_node, int root_player, std::ofstream &log, int alpha, int beta){
+    if (!cur_node->bonus && (board.moves_available(player_num) == 0 || current_depth >= max_depth) ){
+        cur_node->value = board.util_value(player_num, root_player);
+        cur_node->print_to_log(log, alpha, beta);
+        return cur_node;
+    }
+    //else if MAX's move
+    else if(is_max){
+        //return highest minimax_value of successors
+        cur_node->print_to_log(log, alpha, beta);
+        TreeItem *max_child_node = NULL;
+        int *next_moves = board.next_moves(player_num);
+        int count = board.moves_available(player_num);
+        for (int i=0; i<count; i++) {
+            MancalaBoard nextBoard = MancalaBoard(board);
+            bool bonus = nextBoard.make_move(player_num, next_moves[i]);
+            int depth = cur_node->bonus ? current_depth : current_depth + 1;
+            bool is_max = bonus;//stays true if a bonus move
+            int next_player = player_num;
+            if(!bonus){
+                if(player_num == 1){
+                    next_player = 2;
+                }
+                else{
+                    next_player = 1;
+                }
+            }
+            
+            TreeItem *next_node;
+            if(is_max){
+                next_node = new TreeItem(is_max, INT32_MIN, player_num, next_moves[i], depth);
+            }
+            else{
+                next_node = new TreeItem(is_max, INT32_MAX, player_num, next_moves[i], depth);
+            }
+            next_node->bonus = bonus;
+            
+            
+            TreeItem *best_child = minimax_value_ab(nextBoard, depth, max_depth, next_player, is_max, next_node, root_player, log, alpha, beta);
+            if(bonus){//if it's a part of a string of moves
+                next_node->next_move = best_child;
+            }
+            
+            if(!max_child_node){
+                max_child_node = next_node;
+                cur_node->value = max_child_node->value;
+            }
+            else if(next_node->value > max_child_node->value){
+                max_child_node = next_node;
+                cur_node->value = max_child_node->value;
+            }
+            if(max_child_node->value >= beta){
+                cur_node->print_to_log(log, alpha, beta);
+                delete [] next_moves;
+                return max_child_node;
+            }
+            if(max_child_node->value > alpha){
+                alpha = max_child_node->value;
+            }
+            cur_node->print_to_log(log, alpha, beta);
+        }
+        delete [] next_moves;
+        return max_child_node;
+    }
+    //else (i.e. MIN's move)
+    else{
+        //return lowest minimax_value of successors
+        cur_node->print_to_log(log, alpha, beta);
+        TreeItem *min_child_node = NULL;
+        int *next_moves = board.next_moves(player_num);
+        int count = board.moves_available(player_num);
+        for (int i=0; i<count; i++) {
+            MancalaBoard nextBoard = MancalaBoard(board);
+            bool bonus = nextBoard.make_move(player_num, next_moves[i]);
+            int depth = cur_node->bonus ? current_depth : current_depth + 1;
+            bool is_max = !bonus;//MIN && bonus -> false,  MIN && !bonus -> true
+            int next_player = player_num;
+            if(!bonus){
+                if(player_num == 1){
+                    next_player = 2;
+                }
+                else{
+                    next_player = 1;
+                }
+            }
+            
+            TreeItem *next_node;
+            if(is_max){
+                next_node = new TreeItem(is_max, INT32_MIN, player_num, next_moves[i], depth);
+            }
+            else{
+                next_node = new TreeItem(is_max, INT32_MAX, player_num, next_moves[i], depth);
+            }
+            next_node->bonus = bonus;
+            
+            //next_node->print_to_log(log, print);
+            TreeItem *best_child = minimax_value_ab(nextBoard, depth, max_depth, next_player, is_max, next_node, root_player, log, alpha, beta);
+            if(bonus){//if it's a part of a string of moves
+                next_node->next_move = best_child;
+            }
+            next_node->value = best_child->value;
+            if(!min_child_node){
+                min_child_node = next_node;
+                cur_node->value = min_child_node->value;
+            }
+            else if(next_node->value < min_child_node->value){
+                min_child_node = next_node;
+                cur_node->value = min_child_node->value;
+            }
+            
+            if(min_child_node->value <= alpha){
+                cur_node -> print_to_log(log, alpha, beta);
+                delete [] next_moves;
+                return min_child_node;
+            }
+            if(min_child_node->value < beta){
+                beta = min_child_node->value;
+            }
+            cur_node -> print_to_log(log, alpha, beta);
+        }
+        delete [] next_moves;
+        return min_child_node;
+    }
+}
+
+
+
 //DataStructure implementations, is this even needed?
+void TreeItem::print_to_log(std::ofstream &log, int alpha, int beta){
+    std::string s_alpha;
+    std::string s_beta;
+    if(alpha == INT32_MAX){
+        s_alpha = "Infinity";
+    }
+    else if(alpha == INT32_MIN){
+        s_alpha = "-Infinity";
+    }
+    else{
+        std::ostringstream s;
+        s << alpha;
+        std::string convert(s.str());
+        s_alpha = convert;
+    }
+    if(beta == INT32_MAX){
+        s_beta = "Infinity";
+    }
+    else if(beta == INT32_MIN){
+        s_beta = "-Infinity";
+    }
+    else{
+        std::ostringstream s;
+        s << beta;
+        std::string convert(s.str());
+        s_beta = convert;
+    }
+    
+    if(value == INT32_MAX){
+        log << move_name << "," << depth << ",Infinity," << s_alpha << "," << s_beta << std::endl;
+        std::cout << move_name << "," << depth << ",Infinity," << s_alpha << "," << s_beta << std::endl;
+    }
+    else if(value == INT32_MIN){
+        log << move_name << "," << depth << ",-Infinity," << s_alpha << "," << s_beta << std::endl;
+        std::cout << move_name << "," << depth << ",-Infinity," << s_alpha << "," << s_beta << std::endl;
+    }
+    else{
+        log << move_name << "," << depth << "," << value << "," << s_alpha << "," << s_beta << std::endl;
+        std::cout << move_name << "," << depth << "," << value << "," << s_alpha << "," << s_beta << std::endl;
+    }
+}
+
 void TreeItem::print_to_log(std::ofstream &log, bool print){
     if(!print){
         return;
