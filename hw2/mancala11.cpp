@@ -42,7 +42,7 @@ int main(int argc, char *argv[]){
     }
     
     std::ifstream input_file(argv[2]);
-    //std::ifstream input_file("myTests.txt");
+    //std::ifstream input_file("p2_game_over.txt");
     if(!input_file.is_open()){
         std::cout << "File not found" << std::endl;
         return 1;
@@ -157,6 +157,8 @@ public:
     
     void print();
     void print_to_file(std::ofstream &output);
+    
+    void checkGameOver(int player_turn);
 private:
     int *cells;
     int p1_mancala;
@@ -182,7 +184,7 @@ void run_minimax(int p, std::vector<int>&p2_state, std::vector<int>&p1_state, in
         print = false;//greedy scenario
     }
     else{
-        std::cout << "Node,Depth,Value" << std::endl;
+        //std::cout << "Node,Depth,Value" << std::endl;
         log << "Node,Depth,Value" << std::endl;
     }
     //TODO clean up all the TreeItem memory
@@ -243,7 +245,7 @@ void run_minimax(int p, std::vector<int>&p2_state, std::vector<int>&p1_state, in
         initialBoard.make_move(move->player_num, move->move_index);
         move = move->next_move;
     }
-    
+    initialBoard.checkGameOver(best_move->player_num);
     initialBoard.print_to_file(next_state);
     
     
@@ -262,7 +264,7 @@ TreeItem *minimax_value(MancalaBoard& board, int current_depth, int max_depth, i
     else if(is_max){
         //return highest minimax_value of successors
         cur_node->print_to_log(log, print);
-        TreeItem *max_child_node = NULL;
+        TreeItem *max_child_node = cur_node;
         int *next_moves = board.next_moves(player_num);
         int count = board.moves_available(player_num);
         for (int i=0; i<count; i++) {
@@ -314,7 +316,7 @@ TreeItem *minimax_value(MancalaBoard& board, int current_depth, int max_depth, i
     else{
         //return lowest minimax_value of successors
         cur_node->print_to_log(log, print);
-        TreeItem *min_child_node = NULL;
+        TreeItem *min_child_node = cur_node;
         int *next_moves = board.next_moves(player_num);
         int count = board.moves_available(player_num);
         for (int i=0; i<count; i++) {
@@ -366,7 +368,7 @@ TreeItem *minimax_value(MancalaBoard& board, int current_depth, int max_depth, i
 }
 void run_ab(int p, std::vector<int>&p2_state, std::vector<int>&p1_state, int p2S, int p1S, int depth, std::ofstream &next_state, std::ofstream &log){
     
-    std::cout << "Node,Depth,Value,Alpha,Beta" << std::endl;
+    //std::cout << "Node,Depth,Value,Alpha,Beta" << std::endl;
     log << "Node,Depth,Value,Alpha,Beta" << std::endl;
 
     //TODO clean up all the TreeItem memory
@@ -449,7 +451,7 @@ TreeItem *minimax_value_ab(MancalaBoard& board, int current_depth, int max_depth
     else if(is_max){
         //return highest minimax_value of successors
         cur_node->print_to_log(log, alpha, beta);
-        TreeItem *max_child_node = NULL;
+        TreeItem *max_child_node = cur_node;
         int *next_moves = board.next_moves(player_num);
         int count = board.moves_available(player_num);
         for (int i=0; i<count; i++) {
@@ -509,7 +511,7 @@ TreeItem *minimax_value_ab(MancalaBoard& board, int current_depth, int max_depth
     else{
         //return lowest minimax_value of successors
         cur_node->print_to_log(log, alpha, beta);
-        TreeItem *min_child_node = NULL;
+        TreeItem *min_child_node = cur_node;
         int *next_moves = board.next_moves(player_num);
         int count = board.moves_available(player_num);
         for (int i=0; i<count; i++) {
@@ -605,15 +607,15 @@ void TreeItem::print_to_log(std::ofstream &log, int alpha, int beta){
     
     if(value == INT32_MAX){
         log << move_name << "," << depth << ",Infinity," << s_alpha << "," << s_beta << std::endl;
-        std::cout << move_name << "," << depth << ",Infinity," << s_alpha << "," << s_beta << std::endl;
+        //std::cout << move_name << "," << depth << ",Infinity," << s_alpha << "," << s_beta << std::endl;
     }
     else if(value == INT32_MIN){
         log << move_name << "," << depth << ",-Infinity," << s_alpha << "," << s_beta << std::endl;
-        std::cout << move_name << "," << depth << ",-Infinity," << s_alpha << "," << s_beta << std::endl;
+        //std::cout << move_name << "," << depth << ",-Infinity," << s_alpha << "," << s_beta << std::endl;
     }
     else{
         log << move_name << "," << depth << "," << value << "," << s_alpha << "," << s_beta << std::endl;
-        std::cout << move_name << "," << depth << "," << value << "," << s_alpha << "," << s_beta << std::endl;
+        //std::cout << move_name << "," << depth << "," << value << "," << s_alpha << "," << s_beta << std::endl;
     }
 }
 
@@ -623,15 +625,15 @@ void TreeItem::print_to_log(std::ofstream &log, bool print){
     }
     if(value == INT32_MAX){
         log << move_name << "," << depth << ",Infinity" << std::endl;
-        std::cout << move_name << "," << depth << ",Infinity" << std::endl;
+        //std::cout << move_name << "," << depth << ",Infinity" << std::endl;
     }
     else if(value == INT32_MIN){
         log << move_name << "," << depth << ",-Infinity" << std::endl;
-        std::cout << move_name << "," << depth << ",-Infinity" << std::endl;
+        //std::cout << move_name << "," << depth << ",-Infinity" << std::endl;
     }
     else{
         log << move_name << "," << depth << "," << value << std::endl;
-        std::cout << move_name << "," << depth << "," << value << std::endl;
+        //std::cout << move_name << "," << depth << "," << value << std::endl;
     }
 }
 
@@ -690,7 +692,23 @@ void GameTree::addChild(TreeItem *parent, TreeItem* child){
     child->parent = parent;
     parent->children.push_back(child);
 }
-
+void MancalaBoard::checkGameOver(int player_turn){
+    if(moves_available(player_turn) == 0){
+        //If this is the case then the game is over and you need to add all stones from the opposing side to their mancala
+        if(player_turn == 1){
+            for(int i=p2_cell_start; i <= p2_cell_end; i++){
+                p2_mancala += cells[i];
+                cells[i] = 0;
+            }
+        }
+        else if(player_turn == 2){
+            for(int i=0; i <= p1_cell_end; i++){
+                p1_mancala += cells[i];
+                cells[i] = 0;
+            }
+        }
+    }
+}
 void MancalaBoard::print(){
     for (int i=p2_cell_start; i<=p2_cell_end; i++) {
         if(i == p2_cell_end){//no space and endl
@@ -714,27 +732,27 @@ void MancalaBoard::print(){
 void MancalaBoard::print_to_file(std::ofstream &output){
     for (int i=p2_cell_start; i<=p2_cell_end; i++) {
         if(i == p2_cell_end){//no space and endl
-            std::cout << cells[i] << std::endl;
+           // std::cout << cells[i] << std::endl;
             output << cells[i] << std::endl;
         }
         else{//print and space
-            std::cout << cells[i] << " ";
+            //std::cout << cells[i] << " ";
             output << cells[i] << " ";
         }
     }
     for (int i=p1_cell_start; i<=p1_cell_end; i++) {
         if(i == p1_cell_end){//no space and endl
-            std::cout << cells[i] << std::endl;
+            //std::cout << cells[i] << std::endl;
             output << cells[i] << std::endl;
         }
         else{//print and space
-            std::cout << cells[i] << " ";
+            //std::cout << cells[i] << " ";
             output << cells[i] << " ";
         }
     }
-    std::cout << p2_mancala << std::endl;
+    //std::cout << p2_mancala << std::endl;
     output << p2_mancala << std::endl;
-    std::cout << p1_mancala << std::endl;
+    //std::cout << p1_mancala << std::endl;
     output << p1_mancala << std::endl;
 }
 
@@ -880,6 +898,7 @@ MancalaBoard::~MancalaBoard(){
 //Enocdes rules of the game, pretty crazy function
 //excepts a 0-indexed move relative to the player's cells from left to right
 bool MancalaBoard::make_move(int player, int cell){
+    checkGameOver(player);
     if(player == 1){
         if(cell > p1_cell_end || cell < 0){
             std::cout << "Invalid move for p1" << std::endl;
@@ -939,12 +958,18 @@ bool MancalaBoard::make_move(int player, int cell){
         }
         if(pos == p2_cell_end + 1)//bonus move!
         {
-            return true;
+            if(moves_available(player) > 0){
+                return true;
+            }
+            else{
+                checkGameOver(player);
+            }
         }
     }
     else if(player == 2){
         if(cell >= num_cells || cell < 0){
             std::cout << "Invalid move for p2" << std::endl;
+            return false;
         }
         
         cell = cell + num_cells;//convert to upper cell location in internal state representation
@@ -997,7 +1022,12 @@ bool MancalaBoard::make_move(int player, int cell){
             num_moves--;
         }
         if(pos == p1_cell_start - 1){//bonus move!
-            return true;
+            if(moves_available(player) > 0){
+                return true;
+            }
+            else{
+                checkGameOver(player);
+            }
         }
     }
     return false;//performed action with no bonus move
