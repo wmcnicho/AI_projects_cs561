@@ -987,6 +987,9 @@ bool MancalaBoard::make_move(int player, int cell){
                         cells[pos] = 0;
                         p2_mancala++;
                     }
+                    else{
+                        cells[pos]++;
+                    }
                 }
                 else{
                     cells[pos]++;
