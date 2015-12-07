@@ -1,0 +1,9 @@
+1
+C(Alice)
+6
+A(x,y) ^ B(y,z) => C(z)
+D(z) => A(x,y)
+R(x) => D(z)
+D(Duck)
+R(Tom)
+B(Max,Alice)

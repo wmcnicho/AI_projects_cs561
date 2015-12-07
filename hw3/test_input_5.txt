@@ -1,0 +1,6 @@
+1
+C(Tom)
+3
+B(a,Banana,z) => C(y)
+F(x) => B(x,Banana,z)
+F(Dog)

@@ -1,0 +1,5 @@
+1
+B(Banana)
+2
+A(John)
+A(x) => B(y)

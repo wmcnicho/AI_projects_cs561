@@ -1,0 +1,8 @@
+1
+F(Test)
+5
+L(f) ^ C(Fail) ^ D(x) => F(Test)
+A(a,b) ^ B(x) => C(Fail)
+A(A,B)
+D(True)
+L(True)

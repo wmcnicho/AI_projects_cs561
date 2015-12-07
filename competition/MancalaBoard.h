@@ -13,6 +13,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <sstream>
 //Game representation
 class MancalaBoard{
     /**Represents the board of the game. Does this all through a single array and an interaction interface**/
@@ -36,11 +37,18 @@ public:
     void print();
     void print_to_file(std::ofstream &output);
     
-    void checkGameOver(int player_turn);
-private:
-    int *cells;
+    std::string toString();
+    
+    bool checkGameOver(int player_turn);
+    bool checkMoveValid(int move, int player_num);
+    
+    int remaining_stones();
+    double cells_per_player();
+    
     int p1_mancala;
     int p2_mancala;
+private:
+    int *cells;
     int p1_cell_start;
     int p2_cell_start;
     int p1_cell_end;

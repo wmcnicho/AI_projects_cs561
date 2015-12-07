@@ -1,0 +1,10 @@
+3
+F(Steve)
+F(Bill)
+A(Test)
+5
+A(x,y,z) => A(Test)
+A(x,y) ^ A(z) => F(w)
+F(x,Bob) => A(x,y,Lol)
+F(Bill,Bob)
+A(Two,Chains)

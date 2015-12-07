@@ -1,0 +1,8 @@
+3
+F(Steve)
+F(Bill)
+A(Test)
+3
+A(x,y) ^ A(z) => F(w)
+A(Sex)
+A(Two,Chains)

@@ -8,24 +8,64 @@
 
 #include "MancalaBoard.h"
 
-
-void MancalaBoard::checkGameOver(int player_turn){
+bool MancalaBoard::checkMoveValid(int move, int player_num){
+    int count = moves_available(player_num);
+    int *options = next_moves(player_num);
+    
+    for (int i=0; i<count; ++i) {
+        if(options[i] == move){
+            delete options;
+            return true;
+        }
+    }
+    delete options;
+    return false;
+}
+bool MancalaBoard::checkGameOver(int player_turn){
     if(moves_available(player_turn) == 0){
         //If this is the case then the game is over and you need to add all stones from the opposing side to their mancala
         if(player_turn == 1){
             for(int i=p2_cell_start; i <= p2_cell_end; i++){
                 p2_mancala += cells[i];
                 cells[i] = 0;
+                return true;
             }
         }
         else if(player_turn == 2){
             for(int i=0; i <= p1_cell_end; i++){
                 p1_mancala += cells[i];
                 cells[i] = 0;
+                return true;
             }
         }
     }
+    return false;
 }
+
+std::string MancalaBoard::toString(){
+    std::stringstream output;
+    for (int i=p2_cell_start; i<=p2_cell_end; i++) {
+        if(i == p2_cell_end){//no space and endl
+            output << cells[i] << std::endl;
+            
+        }
+        else{//print and space
+            output << cells[i] << " ";
+        }
+    }
+    for (int i=p1_cell_start; i<=p1_cell_end; i++) {
+        if(i == p1_cell_end){//no space and endl
+            output << cells[i] << std::endl;
+        }
+        else{//print and space
+            output << cells[i] << " ";
+        }
+    }
+    output << p2_mancala << std::endl;
+    output << p1_mancala << std::endl;
+    return output.str();
+}
+
 void MancalaBoard::print(){
     for (int i=p2_cell_start; i<=p2_cell_end; i++) {
         if(i == p2_cell_end){//no space and endl
@@ -304,6 +344,9 @@ bool MancalaBoard::make_move(int player, int cell){
                         cells[pos] = 0;
                         p2_mancala++;
                     }
+                    else{
+                        cells[pos]++;
+                    }
                 }
                 else{
                     cells[pos]++;
@@ -348,4 +391,18 @@ bool MancalaBoard::make_move(int player, int cell){
         }
     }
     return false;//performed action with no bonus move
+}
+
+int MancalaBoard::remaining_stones(){
+    int count = 0;
+    for(int i=0; i <= p2_cell_end; i++){
+        if (cells[i] > 0) {
+            count++;
+        }
+    }
+    return count;
+}
+
+double MancalaBoard::cells_per_player(){
+    return static_cast<double>(num_cells);
 }
