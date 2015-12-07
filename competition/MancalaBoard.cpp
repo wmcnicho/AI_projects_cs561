@@ -44,8 +44,12 @@ bool MancalaBoard::checkGameOver(int player_turn){
 
 std::string MancalaBoard::toString(){
     std::stringstream output;
+    int width = num_cells*2 + 2 + 4;
     for (int i=p2_cell_start; i<=p2_cell_end; i++) {
-        if(i == p2_cell_end){//no space and endl
+        if(i == p2_cell_start){
+            output << std::setw(4) << std::setfill(' ') << cells[i] << " ";
+        }
+        else if(i == p2_cell_end){//no space and endl
             output << cells[i] << std::endl;
             
         }
@@ -53,16 +57,21 @@ std::string MancalaBoard::toString(){
             output << cells[i] << " ";
         }
     }
+    
+    output << std::setfill(' ') << " " << p2_mancala << "             " << p1_mancala << std::endl;
+    
     for (int i=p1_cell_start; i<=p1_cell_end; i++) {
-        if(i == p1_cell_end){//no space and endl
+        if(i == p1_cell_start){
+            output << std::right <<std::setw(4) << std::setfill(' ') << cells[i] << " ";
+        }
+        else if(i == p1_cell_end){//no space and endl
             output << cells[i] << std::endl;
         }
         else{//print and space
             output << cells[i] << " ";
         }
     }
-    output << p2_mancala << std::endl;
-    output << p1_mancala << std::endl;
+    
     return output.str();
 }
 
